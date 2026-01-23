@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Login | Student Productivity</title>
+<style>
+body{font-family:Arial;background:#f4f7fb;display:flex;justify-content:center;align-items:center;height:100vh}
+
+.card{background:#fff;padding:30px;border-radius:10px;width:320px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+input,button{width:100%;padding:10px;margin-top:10px}
+
+button{background:#4f46e5;color:#fff;border: 2px;transition: 0.3s;}
+
+button:hover{
+  background: #4338ca;
+  transform: scale(1.03);
+}
+
+</style>
+</head>
+<body>
+<div class="card">
+<h2>Student Login</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="signup()">Signup</button>
+<button onclick="login()">Login</button>
+</div>
+
+let users=JSON.parse(localStorage.getItem('users'))||[];
+function signup(){users.push({email:email.value,password:password.value});localStorage.setItem('users',JSON.stringify(users));alert('Signup success');}
+function login(){let u=users.find(x=>x.email===email.value&&x.password===password.value);if(!u)return alert('Invalid');localStorage.setItem('currentUser',email.value);location.href='dashboard.html';}
+</script>
+</body>
+</html>
