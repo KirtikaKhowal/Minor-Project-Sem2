@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartStudent · AI Study Assistant</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <style>
+    /* ========== GLOBAL VARIABLES & RESET ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      transition: background-color 0.4s ease, color 0.3s ease;
+    }
+
+    /* ========== THEME SYSTEMS ========== */
+    body.light {
+      --bg-primary: #f4f7fd;
+      --bg-gradient: linear-gradient(145deg, #f0f4ff 0%, #e9eefe 50%, #e2e4ff 100%);
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --sidebar-bg: rgba(255, 255, 255, 0.6);
+      --text-primary: #1b1f3a;
+      --text-secondary: #3a3f5e;
+      --accent-1: #5b7cfd;
+      --accent-2: #a16eff;
+      --accent-gradient: linear-gradient(135deg, #5b7cfd, #a16eff);
+      --border-light: rgba(255, 255, 255, 0.8);
+      --shadow: 0 20px 40px -15px rgba(0, 20, 50, 0.15);
+      --card-shadow: 0 15px 35px -10px rgba(67, 97, 238, 0.2);
+      --input-bg: rgba(255, 255, 255, 0.5);
+    }
+
+    body.dark {
+      --bg-primary: #0b1020;
+      --bg-gradient: linear-gradient(145deg, #0a0f20 0%, #13182e 50%, #1b1f3c 100%);
+      --card-bg: rgba(20, 28, 50, 0.8);
+      --sidebar-bg: rgba(12, 18, 34, 0.85);
+      --text-primary: #f0f3ff;
+      --text-secondary: #bdc3e0;
+      --accent-1: #7b9cff;
+      --accent-2: #b47aff;
+      --accent-gradient: linear-gradient(135deg, #7b9cff, #b47aff);
+      --border-light: #2f3b66;
+      --shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+      --card-shadow: 0 15px 35px -10px #00000070;
+      --input-bg: rgba(30, 40, 65, 0.7);
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-primary);
+      background-size: 200% 200%;
+      animation: gradientFlow 15s ease infinite;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ========== UTILITY CLASSES ========== */
+    .hidden { display: none !important; }
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-light);
+      border-radius: 32px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .btn {
+      border: none;
+      padding: 14px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 8px 20px -5px var(--accent-2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px var(--accent-2);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--accent-2);
+      color: var(--text-primary);
+      box-shadow: none;
+    }
+
+    .btn-outline:hover {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 30px;
+      background: var(--input-bg);
+      backdrop-filter: blur(4px);
+      color: var(--text-primary);
+      font-size: 1rem;
+      border: 1px solid transparent;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent-2);
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(161, 110, 255, 0.15);
+    }
+
+    /* ========== ANIMATIONS ========== */
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-slide {
+      animation: fadeSlide 0.5s ease forwards;
+    }
+
+    /* ========== AUTH CONTAINER ========== */
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 40px;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 50px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+      animation: fadeSlide 0.6s;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 35px;
+      background: rgba(255,255,255,0.1);
+      padding: 8px;
+      border-radius: 60px;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .tab.active {
+      background: var(--accent-gradient);
+      color: white;
+    }
+
+    .error-msg {
+      color: #ff5a7c;
+      font-size: 0.9rem;
+      margin: 12px 0;
+      min-height: 24px;
+      font-weight: 500;
+      animation: shake 0.4s;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    /* ========== DASHBOARD LAYOUT ========== */
+    #dashboard {
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 25px;
+      display: flex;
+      gap: 25px;
+      min-height: 100vh;
+      animation: fadeSlide 0.6s;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 40px;
+      padding: 30px 15px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sidebar-item {
+      padding: 16px 22px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-weight: 500;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      color: var(--text-secondary);
+    }
+
+    .sidebar-item i {
+      width: 28px;
+      font-size: 1.3rem;
+    }
+
+    .sidebar-item.active {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: 0 15px 25px -8px var(--accent-2);
+    }
+
+    .sidebar-item:not(.active):hover {
+      background: rgba(161, 110, 255, 0.15);
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border-radius: 40px;
+      padding: 35px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+    }
+
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(161, 110, 255, 0.2);
+    }
+
+    .user-greeting {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* THEME TOGGLE */
+    .theme-switch {
+      width: 70px;
+      height: 34px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      cursor: pointer;
+      border: 1px solid var(--border-light);
+    }
+
+    .theme-switch-ball {
+      width: 26px;
+      height: 26px;
+      background: var(--accent-gradient);
+      border-radius: 50%;
+      transition: 0.3s;
+      transform: translateX(0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    body.dark .theme-switch-ball {
+      transform: translateX(36px);
+      background: #aab3ff;
+    }
+
+    /* CARDS GRID */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 25px;
+      margin: 30px 0;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.07);
+      border-radius: 30px;
+      padding: 28px;
+      backdrop-filter: blur(5px);
+      border: 1px solid var(--border-light);
+      transition: 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--card-shadow);
+    }
+
+    .stat-card i {
+      font-size: 2.2rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+    }
+
+    .stat-card h3 {
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+    }
+
+    /* PROGRESS BAR */
+    .progress-bar {
+      width: 100%;
+      height: 14px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 30px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-gradient);
+      width: 0%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 30px;
+    }
+
+    /* ASSIGNMENT ROWS */
+    .assignment-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 15px;
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 50px;
+      margin: 12px 0;
+      border: 1px solid var(--border-light);
+      transition: 0.2s;
+    }
+
+    .assignment-row:hover {
+      background: rgba(161, 110, 255, 0.08);
+    }
+
+    .priority-badge {
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .priority-high { background: #ff4d6d; color: white; }
+    .priority-medium { background: #ffaa5e; color: #1a1a2e; }
+    .priority-low { background: #6cd4a0; color: #1a1a2e; }
+    .overdue { border-left: 8px solid #ff4d6d; background: rgba(255,77,109,0.1); }
+
+    /* TIMETABLE GRID */
+    .timetable-input-section {
+      background: rgba(255,255,255,0.05);
+      border-radius: 40px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .subject-input-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+
+    .subject-input-group input {
+      flex: 2;
+    }
+
+    .subject-input-group select {
+      flex: 1;
+    }
+
+    .timetable-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 15px;
+      margin: 30px 0;
+    }
+
+    .day-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 28px;
+      padding: 22px 12px;
+      text-align: center;
+      border: 1px solid var(--border-light);
+      transition: 0.2s;
+    }
+
+    .day-card:hover {
+      transform: scale(1.02);
+      background: rgba(161,110,255,0.1);
+    }
+
+    .today-highlight {
+      background: rgba(91,124,253,0.25);
+      border: 2px solid var(--accent-1);
+      box-shadow: 0 0 25px var(--accent-1);
+    }
+
+    .day-card h4 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: var(--accent-1);
+    }
+
+    .study-slot {
+      padding: 8px;
+      margin: 5px 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    /* CHAT AREA */
+    .chat-area {
+      height: 400px;
+      overflow-y: auto;
+      padding: 25px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 16px 24px;
+      border-radius: 30px;
+      animation: fadeSlide 0.3s;
+      line-height: 1.5;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: var(--accent-gradient);
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-bottom-left-radius: 5px;
+    }
+
+    /* ANALYTICS CIRCLE */
+    .progress-circle {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent-1) 0deg, var(--accent-2) 0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 30px auto;
+      transition: 0.3s;
+    }
+
+    .inner-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    /* TOAST */
+    #toast-area {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      color: var(--text-primary);
+      padding: 18px 28px;
+      border-radius: 60px;
+      border-left: 6px solid var(--accent-2);
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s;
+      font-weight: 500;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(60px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 50px;
+      padding: 40px;
+      max-width: 450px;
+      width: 90%;
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-light);
+    }
+
+    /* FILTER SECTION */
+    .filter-section {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin: 25px 0;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1000px) {
+      #dashboard { flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 15px; }
+      .sidebar-item { flex-shrink: 0; }
+      .timetable-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .timetable-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="light">
+  <div id="app">
+    <!-- AUTH SECTION -->
+    <div id="authContainer" class="auth-wrapper">
+      <div class="auth-container">
+        <div class="tabs">
+          <div class="tab active" data-tab="login">Login</div>
+          <div class="tab" data-tab="signup">Sign Up</div>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm">
+          <input type="email" id="loginEmail" placeholder="Email" value="student@demo.com"><br><br>
+          <input type="password" id="loginPassword" placeholder="Password" value="123456"><br>
+          <div class="error-msg" id="loginError"></div>
+          <button class="btn" id="loginBtn" style="width:100%">Login to Dashboard</button>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupForm" class="hidden">
+          <input type="text" id="signupName" placeholder="Full Name"><br><br>
+          <input type="email" id="signupEmail" placeholder="Email"><br><br>
+          <input type="password" id="signupPassword" placeholder="Password (min 6 chars)"><br>
+          <div class="error-msg" id="signupError"></div>
+          <button class="btn" id="signupBtn" style="width:100%">Create Account</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboard" class="hidden">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-item active" data-page="dashboard-main">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </div>
+        <div class="sidebar-item" data-page="assignments">
+          <i class="fas fa-tasks"></i> Assignments
+        </div>
+        <div class="sidebar-item" data-page="timetable">
+          <i class="fas fa-calendar-alt"></i> Timetable
+        </div>
+        <div class="sidebar-item" data-page="assistant">
+          <i class="fas fa-robot"></i> Assistant
+        </div>
+        <div class="sidebar-item" data-page="analytics">
+          <i class="fas fa-chart-line"></i> Analytics
+        </div>
+        <div style="flex:1"></div>
+        <div class="sidebar-item" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="main-content">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+          <span class="user-greeting" id="greetingName">Welcome back, Student</span>
+          <div class="theme-switch" id="themeToggle">
+            <div class="theme-switch-ball">
+              <i class="fas fa-sun" style="font-size: 14px;"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Page Content -->
+        <div id="pageContent" class="fade-slide">
+          <!-- Content will be injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Area -->
+    <div id="toast-area"></div>
+  </div>
+
+  <script>
+    (function() {
+      // ========== STORAGE KEYS & STATE ==========
+      const USERS_KEY = 'smart_users';
+      const CURRENT_USER = 'current_user';
+      const THEME_KEY = 'app_theme';
+      const ASSIGNMENTS_KEY = 'assignments_';
+      const TIMETABLE_KEY = 'timetable_';
+      const NOTIF_KEY = 'notified_flags';
+
+      let currentUser = null;
+      let assignments = [];
+      let timetableData = {
+        subjects: [],
+        weakSubjects: [],
+        hoursPerDay: 4,
+        examDates: {}
+      };
+      let notifiedFlags = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}');
+
+      // ========== HELPER FUNCTIONS ==========
+      function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }
+      function saveUsers(users) { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+      function saveCurrentUser(email) { localStorage.setItem(CURRENT_USER, email); }
+      function getCurrentUser() { return localStorage.getItem(CURRENT_USER); }
+
+      function loadAssignments() {
+        if(currentUser) {
+          assignments = JSON.parse(localStorage.getItem(ASSIGNMENTS_KEY + currentUser) || '[]');
+        }
+      }
+      
+      function saveAssignments() {
+        if(currentUser) {
+          localStorage.setItem(ASSIGNMENTS_KEY + currentUser, JSON.stringify(assignments));
+        }
+      }
+
+      function loadTimetable() {
+        if(currentUser) {
+          const saved = localStorage.getItem(TIMETABLE_KEY + currentUser);
+          if(saved) {
+            timetableData = JSON.parse(saved);
+          }
+        }
+      }
+
+      function saveTimetable() {
+        if(currentUser) {
+          localStorage.setItem(TIMETABLE_KEY + currentUser, JSON.stringify(timetableData));
+        }
+      }
+
+      // ========== AUTH ELEMENTS ==========
+      const authContainer = document.getElementById('authContainer');
+      const dashboard = document.getElementById('dashboard');
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const tabs = document.querySelectorAll('.tab');
+      const loginError = document.getElementById('loginError');
+      const signupError = document.getElementById('signupError');
+
+      // Tab switching
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          if(tab.dataset.tab === 'login') {
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+          } else {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+          }
+        });
+      });
+
+      // Signup
+      document.getElementById('signupBtn').addEventListener('click', () => {
+        const name = document.getElementById('signupName').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const pwd = document.getElementById('signupPassword').value;
+        
+        if(!name || !email || !pwd) {
+          signupError.textContent = 'All fields required';
+          return;
+        }
+        if(pwd.length < 6) {
+          signupError.textContent = 'Password must be at least 6 characters';
+          return;
+        }
+        
+        const users = getUsers();
+        if(users.find(u => u.email === email)) {
+          signupError.textContent = 'Email already registered';
+          return;
+        }
+        
+        users.push({ name, email, password: pwd });
+        saveUsers(users);
+        signupError.textContent = '✓ Account created! Login now.';
+        document.querySelector('[data-tab="login"]').click();
+      });
+
+      // Login
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pwd = document.getElementById('loginPassword').value;
+        const users = getUsers();
+        const user = users.find(u => u.email === email && u.password === pwd);
+        
+        if(!user) {
+          loginError.textContent = 'Invalid email or password';
+          return;
+        }
+        
+        currentUser = user.email;
+        saveCurrentUser(currentUser);
+        authContainer.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        document.getElementById('greetingName').textContent = `Welcome, ${user.name}`;
+        
+        loadAssignments();
+        loadTimetable();
+        renderPage('dashboard-main');
+        requestNotificationPermission();
+        startNotificationScheduler();
+        showToast('Login successful! 👋', 'success');
+      });
+
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem(CURRENT_USER);
+        currentUser = null;
+        dashboard.classList.add('hidden');
+        authContainer.classList.remove('hidden');
+      });
+
+      // Auto-login check
+      (function autoLogin() {
+        const savedEmail = getCurrentUser();
+        if(savedEmail) {
+          const users = getUsers();
+          const user = users.find(u => u.email === savedEmail);
+          if(user) {
+            currentUser = user.email;
+            authContainer.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            document.getElementById('greetingName').textContent = `Welcome, ${user.name}`;
+            loadAssignments();
+            loadTimetable();
+            renderPage('dashboard-main');
+            requestNotificationPermission();
+            startNotificationScheduler();
+          }
+        }
+      })();
+
+      // ========== THEME TOGGLE ==========
+      const themeToggle = document.getElementById('themeToggle');
+      function initTheme() {
+        const saved = localStorage.getItem(THEME_KEY) || 'light';
+        document.body.className = saved;
+        const icon = themeToggle.querySelector('i');
+        if(icon) {
+          icon.className = saved === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+      }
+      
+      themeToggle.addEventListener('click', () => {
+        if(document.body.classList.contains('light')) {
+          document.body.classList.replace('light', 'dark');
+          localStorage.setItem(THEME_KEY, 'dark');
+        } else {
+          document.body.classList.replace('dark', 'light');
+          localStorage.setItem(THEME_KEY, 'light');
+        }
+        const icon = themeToggle.querySelector('i');
+        icon.className = document.body.classList.contains('light') ? 'fas fa-sun' : 'fas fa-moon';
+      });
+      initTheme();
+
+      // ========== NOTIFICATION SYSTEM ==========
+      function requestNotificationPermission() {
+        if(Notification.permission !== 'granted') {
+          Notification.requestPermission();
+        }
+      }
+
+      function showToast(message, type = 'info') {
+        const area = document.getElementById('toast-area');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-bell'}" style="margin-right: 12px;"></i>${message}`;
+        area.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+      }
+
+      function showPushNotification(title, body) {
+        if(Notification.permission === 'granted') {
+          new Notification(title, { body });
+        }
+        showToast(body);
+      }
+
+      function checkDeadlines() {
+        const now = new Date();
+        assignments.forEach(assign => {
+          if(assign.status === 'Completed') return;
+          
+          const deadline = new Date(assign.deadline);
+          const diffHours = (deadline - now) / (1000 * 60 * 60);
+          const id = assign.id;
+          
+          if(diffHours < 0 && !notifiedFlags[`${id}_overdue`]) {
+            showPushNotification('⚠️ Overdue!', `"${assign.title}" is overdue`);
+            notifiedFlags[`${id}_overdue`] = true;
+          } else if(diffHours <= 24 && diffHours > 23 && !notifiedFlags[`${id}_24h`]) {
+            showPushNotification('⏰ 24 Hours Left', `"${assign.title}" due in 24h`);
+            notifiedFlags[`${id}_24h`] = true;
+          } else if(diffHours <= 2 && diffHours > 1.5 && !notifiedFlags[`${id}_2h`]) {
+            showPushNotification('🔥 2 Hours Left', `"${assign.title}" due in 2h`);
+            notifiedFlags[`${id}_2h`] = true;
+          }
+        });
+        localStorage.setItem(NOTIF_KEY, JSON.stringify(notifiedFlags));
+      }
+
+      function startNotificationScheduler() {
+        checkDeadlines();
+        setInterval(checkDeadlines, 60000);
+      }
+
+      // ========== ROUTING & PAGE RENDERING ==========
+      const sidebarItems = document.querySelectorAll('.sidebar-item[data-page]');
+      sidebarItems.forEach(item => {
+        item.addEventListener('click', () => {
+          sidebarItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          renderPage(item.dataset.page);
+        });
+      });
+
+      function renderPage(page) {
+        const container = document.getElementById('pageContent');
+        switch(page) {
+          case 'dashboard-main': container.innerHTML = renderDashboard(); break;
+          case 'assignments': container.innerHTML = renderAssignments(); attachAssignmentEvents(); break;
+          case 'timetable': container.innerHTML = renderTimetable(); attachTimetableEvents(); break;
+          case 'assistant': container.innerHTML = renderAssistant(); attachAssistantEvents(); break;
+          case 'analytics': container.innerHTML = renderAnalytics(); break;
+        }
+      }
+
+      // ========== DASHBOARD MAIN ==========
+      function renderDashboard() {
+        const total = assignments.length;
+        const completed = assignments.filter(a => a.status === 'Completed').length;
+        const pending = total - completed;
+        const perc = total ? Math.round((completed/total)*100) : 0;
+        
+        return `
+          <h2 style="font-size: 2rem; margin-bottom: 30px;">📊 Dashboard Overview</h2>
+          <div class="cards-grid">
+            <div class="stat-card">
+              <i class="fas fa-book-open"></i>
+              <h3>${total}</h3>
+              <p>Total Assignments</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-check-circle"></i>
+              <h3>${completed}</h3>
+              <p>Completed</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-clock"></i>
+              <h3>${pending}</h3>
+              <p>Pending</p>
+            </div>
+          </div>
+          <div style="background: rgba(255,255,255,0.05); border-radius: 30px; padding: 25px; margin-top: 30px;">
+            <h3 style="margin-bottom: 20px;">Overall Progress</h3>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${perc}%"></div>
+            </div>
+            <p style="text-align: right; font-weight: 600; font-size: 1.2rem;">${perc}% Complete</p>
+          </div>
+          <div style="margin-top: 30px; padding: 20px; background: rgba(161,110,255,0.1); border-radius: 30px;">
+            <i class="fas fa-bell" style="margin-right: 10px;"></i>
+            <strong>Notifications Active:</strong> You'll be alerted for upcoming deadlines
+          </div>
+        `;
+      }
+
+      // ========== ASSIGNMENT MANAGER ==========
+      function renderAssignments() {
+        return `
+          <h2 style="font-size: 2rem; margin-bottom: 30px;">📋 Smart Assignment Manager</h2>
+          
+          <!-- Add Assignment Form -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <input type="text" id="assignTitle" placeholder="Assignment Title">
+            <input type="text" id="assignSubject" placeholder="Subject">
+            <input type="datetime-local" id="assignDeadline">
+            <select id="assignPriority">
+              <option value="Low">Low Priority</option>
+              <option value="Medium" selected>Medium Priority</option>
+              <option value="High">High Priority</option>
+            </select>
+            <select id="assignStatus">
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <button class="btn" id="addAssignmentBtn"><i class="fas fa-plus"></i> Add</button>
+          </div>
+
+          <!-- Search & Filter -->
+          <div class="filter-section">
+            <input type="text" id="searchAssign" placeholder="🔍 Search assignments..." style="flex: 2;">
+            <select id="filterPriority" style="flex: 1;">
+              <option value="all">All Priorities</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+            <button class="btn-outline" id="sortByDeadline"><i class="fas fa-sort"></i> Sort by Deadline</button>
+          </div>
+
+          <!-- Assignment List -->
+          <div id="assignmentListContainer"></div>
+
+          <!-- Progress Summary -->
+          <div style="margin-top: 30px; padding: 25px; background: rgba(255,255,255,0.05); border-radius: 30px;">
+            <h3>Completion Progress</h3>
+            <div class="progress-bar" id="mainProgressBar">
+              <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <p id="progressText" style="text-align: right; font-weight: 600;">0% Completed</p>
+          </div>
+        `;
+      }
+
+      function attachAssignmentEvents() {
+        // Add Assignment
+        document.getElementById('addAssignmentBtn')?.addEventListener('click', () => {
+          const title = document.getElementById('assignTitle').value.trim();
+          const subject = document.getElementById('assignSubject').value.trim();
+          const deadline = document.getElementById('assignDeadline').value;
+          const priority = document.getElementById('assignPriority').value;
+          const status = document.getElementById('assignStatus').value;
+
+          if(!title || !deadline) {
+            showToast('Please fill all fields', 'error');
+            return;
+          }
+
+          const newAssign = {
+            id: Date.now(),
+            title,
+            subject: subject || 'General',
+            deadline,
+            priority,
+            status
+          };
+
+          assignments.push(newAssign);
+          saveAssignments();
+          refreshAssignmentList();
+          showToast('Assignment added!', 'success');
+        });
+
+        // Search
+        document.getElementById('searchAssign')?.addEventListener('input', refreshAssignmentList);
+        document.getElementById('filterPriority')?.addEventListener('change', refreshAssignmentList);
+        
+        // Sort
+        let sortActive = false;
+        document.getElementById('sortByDeadline')?.addEventListener('click', (e) => {
+          sortActive = !sortActive;
+          e.currentTarget.style.background = sortActive ? 'var(--accent-gradient)' : '';
+          e.currentTarget.style.color = sortActive ? 'white' : '';
+          refreshAssignmentList(sortActive);
+        });
+
+        refreshAssignmentList();
+      }
+
+      function refreshAssignmentList(sortByDate = false) {
+        const container = document.getElementById('assignmentListContainer');
+        if(!container) return;
+
+        const searchTerm = document.getElementById('searchAssign')?.value.toLowerCase() || '';
+        const filterPrio = document.getElementById('filterPriority')?.value || 'all';
+
+        let filtered = assignments.filter(a => 
+          a.title.toLowerCase().includes(searchTerm) || 
+          a.subject.toLowerCase().includes(searchTerm)
+        );
+
+        if(filterPrio !== 'all') {
+          filtered = filtered.filter(a => a.priority === filterPrio);
+        }
+
+        if(sortByDate) {
+          filtered.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+        }
+
+        if(filtered.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 50px; background: rgba(255,255,255,0.05); border-radius: 40px;">
+              <i class="fas fa-clipboard-list" style="font-size: 4rem; opacity: 0.5;"></i>
+              <h3 style="margin-top: 20px;">No assignments found</h3>
+              <p>Add your first assignment above!</p>
+            </div>
+          `;
+        } else {
+          container.innerHTML = filtered.map(a => {
+            const isOverdue = new Date(a.deadline) < new Date() && a.status !== 'Completed';
+            return `
+              <div class="assignment-row ${isOverdue ? 'overdue' : ''}" data-id="${a.id}">
+                <div style="flex: 2;">
+                  <strong style="font-size: 1.1rem;">${a.title}</strong><br>
+                  <span style="opacity: 0.7;">${a.subject}</span>
+                </div>
+                <div><i class="far fa-calendar"></i> ${new Date(a.deadline).toLocaleString()}</div>
+                <span class="priority-badge priority-${a.priority.toLowerCase()}">${a.priority}</span>
+                <select class="status-change" data-id="${a.id}" style="width: 120px;">
+                  <option ${a.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                  <option ${a.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                </select>
+                <button class="btn-outline edit-assign" data-id="${a.id}" style="padding: 10px 20px;">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-outline delete-assign" data-id="${a.id}" style="padding: 10px 20px;">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Attach event listeners to new elements
+        document.querySelectorAll('.status-change').forEach(select => {
+          select.addEventListener('change', function() {
+            const id = Number(this.dataset.id);
+            const assign = assignments.find(a => a.id === id);
+            if(assign) {
+              assign.status = this.value;
+              saveAssignments();
+              refreshAssignmentList();
+              updateProgressBar();
+            }
+          });
+        });
+
+        document.querySelectorAll('.edit-assign').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const id = Number(this.dataset.id);
+            const assign = assignments.find(a => a.id === id);
+            if(assign) {
+              document.getElementById('assignTitle').value = assign.title;
+              document.getElementById('assignSubject').value = assign.subject;
+              document.getElementById('assignDeadline').value = assign.deadline.slice(0,16);
+              document.getElementById('assignPriority').value = assign.priority;
+              document.getElementById('assignStatus').value = assign.status;
+              
+              // Remove old and add as new after edit
+              assignments = assignments.filter(a => a.id !== id);
+              saveAssignments();
+              refreshAssignmentList();
+            }
+          });
+        });
+
+        document.querySelectorAll('.delete-assign').forEach(btn => {
+          btn.addEventListener('click', function() {
+            if(confirm('Delete this assignment?')) {
+              const id = Number(this.dataset.id);
+              assignments = assignments.filter(a => a.id !== id);
+              saveAssignments();
+              refreshAssignmentList();
+              showToast('Assignment deleted', 'info');
+            }
+          });
+        });
+
+        updateProgressBar();
+      }
+
+      function updateProgressBar() {
+        const total = assignments.length;
+        const completed = assignments.filter(a => a.status === 'Completed').length;
+        const perc = total ? (completed/total)*100 : 0;
+        
+        const fill = document.getElementById('progressFill');
+        const text = document.getElementById('progressText');
+        
+        if(fill) fill.style.width = perc + '%';
+        if(text) text.textContent = `${completed}/${total} completed (${Math.round(perc)}%)`;
+      }
+
+      // ========== SMART TIMETABLE - FULLY DYNAMIC ==========
+      function renderTimetable() {
+        // Get saved timetable data or use defaults
+        const subjects = timetableData.subjects.length ? timetableData.subjects : [{ name: '', isWeak: false }];
+        const hoursPerDay = timetableData.hoursPerDay || 4;
+        
+        let subjectsHTML = '';
+        subjects.forEach((subject, index) => {
+          subjectsHTML += `
+            <div class="subject-input-group" id="subject-${index}">
+              <input type="text" class="subject-name" placeholder="Subject name" value="${subject.name || ''}">
+              <select class="subject-weak">
+                <option value="no" ${subject.isWeak === false ? 'selected' : ''}>Normal</option>
+                <option value="yes" ${subject.isWeak === true ? 'selected' : ''}>Weak Subject (extra time)</option>
+              </select>
+              <button class="btn-outline remove-subject" data-index="${index}" style="padding: 10px 15px;">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          `;
+        });
+
+        return `
+          <h2 style="font-size: 2rem; margin-bottom: 30px;">📅 Dynamic Timetable Generator</h2>
+          
+          <div class="timetable-input-section">
+            <h3 style="margin-bottom: 20px;">⚡ Tell me about your subjects</h3>
+            
+            <div id="subjects-container">
+              ${subjectsHTML}
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+              <button class="btn-outline" id="addSubjectBtn">
+                <i class="fas fa-plus"></i> Add Another Subject
+              </button>
+              
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <label>Hours per day:</label>
+                <input type="number" id="hoursPerDay" min="1" max="12" value="${hoursPerDay}" style="width: 80px;">
+              </div>
+            </div>
+            
+            <button class="btn" id="generateTimetableBtn" style="width: 100%;">
+              <i class="fas fa-magic"></i> Generate My Smart Timetable
+            </button>
+          </div>
+
+          <!-- Timetable Display -->
+          <div id="timetableDisplay"></div>
+        `;
+      }
+
+      function attachTimetableEvents() {
+        // Add subject button
+        document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
+          const container = document.getElementById('subjects-container');
+          const index = container.children.length;
+          const newSubjectDiv = document.createElement('div');
+          newSubjectDiv.className = 'subject-input-group';
+          newSubjectDiv.id = `subject-${index}`;
+          newSubjectDiv.innerHTML = `
+            <input type="text" class="subject-name" placeholder="Subject name" value="">
+            <select class="subject-weak">
+              <option value="no" selected>Normal</option>
+              <option value="yes">Weak Subject (extra time)</option>
+            </select>
+            <button class="btn-outline remove-subject" data-index="${index}" style="padding: 10px 15px;">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          container.appendChild(newSubjectDiv);
+          
+          // Attach remove event to new button
+          newSubjectDiv.querySelector('.remove-subject').addEventListener('click', removeSubject);
+        });
+
+        // Remove subject function
+        function removeSubject(e) {
+          const btn = e.currentTarget;
+          const index = btn.dataset.index;
+          const subjectDiv = document.getElementById(`subject-${index}`);
+          if(subjectDiv && document.getElementById('subjects-container').children.length > 1) {
+            subjectDiv.remove();
+          } else {
+            showToast('At least one subject is required', 'error');
+          }
+        }
+
+        // Attach remove events to existing remove buttons
+        document.querySelectorAll('.remove-subject').forEach(btn => {
+          btn.addEventListener('click', removeSubject);
+        });
+
+        // Generate timetable button
+        document.getElementById('generateTimetableBtn')?.addEventListener('click', () => {
+          // Collect subject data
+          const subjectInputs = document.querySelectorAll('.subject-input-group');
+          const subjects = [];
+          
+          subjectInputs.forEach(group => {
+            const nameInput = group.querySelector('.subject-name');
+            const weakSelect = group.querySelector('.subject-weak');
+            
+            if(nameInput.value.trim()) {
+              subjects.push({
+                name: nameInput.value.trim(),
+                isWeak: weakSelect.value === 'yes'
+              });
+            }
+          });
+
+          if(subjects.length === 0) {
+            showToast('Please add at least one subject', 'error');
+            return;
+          }
+
+          const hoursPerDay = parseInt(document.getElementById('hoursPerDay').value) || 4;
+
+          // Save to timetableData
+          timetableData.subjects = subjects;
+          timetableData.hoursPerDay = hoursPerDay;
+          saveTimetable();
+
+          // Generate and display timetable
+          displayTimetable(subjects, hoursPerDay);
+        });
+
+        // If there are saved subjects, display timetable automatically
+        if(timetableData.subjects.length > 0) {
+          displayTimetable(timetableData.subjects, timetableData.hoursPerDay);
+        }
+      }
+
+      function displayTimetable(subjects, hoursPerDay) {
+        const displayArea = document.getElementById('timetableDisplay');
+        if(!displayArea) return;
+
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const today = new Date().getDay(); // 0 = Sunday, 1 = Monday
+        
+        // Calculate hours per subject
+        const totalSubjects = subjects.length;
+        const weakSubjectsCount = subjects.filter(s => s.isWeak).length;
+        
+        // Base hours distribution
+        let baseHours = Math.floor(hoursPerDay / totalSubjects);
+        let remainingHours = hoursPerDay % totalSubjects;
+        
+        let timetableHTML = `
+          <h3 style="margin: 30px 0 20px;">Your Personalized Weekly Schedule</h3>
+          <div class="timetable-grid">
+        `;
+        
+        days.forEach((day, index) => {
+          const isToday = (index + 1) === today; // Monday = 1
+          let dayPlan = '';
+          let dayHours = hoursPerDay;
+          
+          // Distribute subjects throughout the day
+          subjects.forEach((subject, subIndex) => {
+            let subjectHours = baseHours;
+            
+            // Give extra hour to weak subjects
+            if(subject.isWeak && weakSubjectsCount > 0) {
+              subjectHours += 1;
+            }
+            
+            // Distribute remaining hours
+            if(subIndex < remainingHours) {
+              subjectHours += 1;
+            }
+            
+            // Cap at 3 hours per subject
+            subjectHours = Math.min(3, subjectHours);
+            
+            // Ensure total doesn't exceed dayHours
+            if(subjectHours > 0) {
+              dayPlan += `
+                <div class="study-slot">
+                  <strong>${subject.name}</strong><br>
+                  ${subjectHours} hour${subjectHours > 1 ? 's' : ''}
+                  ${subject.isWeak ? ' <span style="color: #ffaa5e;">📌 Extra focus</span>' : ''}
+                </div>
+              `;
+            }
+          });
+          
+          timetableHTML += `
+            <div class="day-card ${isToday ? 'today-highlight' : ''}">
+              <h4>${day}</h4>
+              ${dayPlan || '<div class="study-slot">✨ Rest Day / Review</div>'}
+              <div style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7;">
+                Total: ${hoursPerDay} hours
+              </div>
+            </div>
+          `;
+        });
+        
+        timetableHTML += `</div>`;
+        
+        // Add study tips
+        timetableHTML += `
+          <div style="margin-top: 30px; padding: 20px; background: rgba(161,110,255,0.1); border-radius: 30px;">
+            <h4><i class="fas fa-lightbulb"></i> Smart Study Tips</h4>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Maximum 3 hours per subject to prevent burnout</li>
+              <li>Weak subjects get 1 extra hour of focus time</li>
+              <li>Take 10-minute breaks between subjects</li>
+              <li>Today's schedule is highlighted ✨</li>
+            </ul>
+          </div>
+        `;
+        
+        displayArea.innerHTML = timetableHTML;
+      }
+
+      // ========== ASSISTANT ==========
+      function renderAssistant() {
+        return `
+          <h2 style="font-size: 2rem; margin-bottom: 30px;">🤖 Personal Assistant</h2>
+          <div class="chat-area" id="chatArea">
+            <div class="message bot-message">
+              👋 Hi! I'm your study assistant. Try asking:<br>
+              • "motivate me"<br>
+              • "deadline"<br>
+              • "progress"<br>
+              • "timetable"<br>
+              • "create timetable for [subjects]"<br>
+              • "help"
+            </div>
+          </div>
+          <div style="display: flex; gap: 15px;">
+            <input type="text" id="assistantInput" placeholder="Type your message..." style="flex: 1;">
+            <button class="btn" id="sendAssistantBtn"><i class="fas fa-paper-plane"></i> Send</button>
+          </div>
+        `;
+      }
+
+      function attachAssistantEvents() {
+        const input = document.getElementById('assistantInput');
+        const sendBtn = document.getElementById('sendAssistantBtn');
+        const chatArea = document.getElementById('chatArea');
+
+        function addMessage(text, sender) {
+          const msgDiv = document.createElement('div');
+          msgDiv.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+          msgDiv.textContent = text;
+          chatArea.appendChild(msgDiv);
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function processQuery(query) {
+          const q = query.toLowerCase();
+          
+          // Check for timetable creation command
+          if(q.includes('create timetable') || q.includes('make timetable')) {
+            // Extract subjects from query
+            const words = q.split(' ');
+            const subjects = [];
+            const commonSubjects = ['math', 'physics', 'chemistry', 'biology', 'english', 'history', 'geography', 'computer', 'literature'];
+            
+            commonSubjects.forEach(sub => {
+              if(q.includes(sub)) {
+                subjects.push(sub.charAt(0).toUpperCase() + sub.slice(1));
+              }
+            });
+            
+            if(subjects.length > 0) {
+              timetableData.subjects = subjects.map(name => ({ name, isWeak: false }));
+              timetableData.hoursPerDay = 4;
+              saveTimetable();
+              
+              // Switch to timetable tab
+              document.querySelector('[data-page="timetable"]').click();
+              return "✅ I've created a timetable with your subjects! Check the Timetable tab to customize it further.";
+            }
+          }
+          
+          else if(q.includes('motivate')) {
+            const quotes = [
+              "🌟 'Believe you can and you're halfway there.' - Theodore Roosevelt",
+              "📚 'The expert in anything was once a beginner.'",
+              "⚡ 'Your only limit is your mind.'",
+              "🎯 'Success is the sum of small efforts, repeated day in and day out.'",
+              "💪 'Don't watch the clock; do what it does. Keep going.' - Sam Levenson"
+            ];
+            return quotes[Math.floor(Math.random() * quotes.length)];
+          }
+          else if(q.includes('deadline')) {
+            const upcoming = assignments
+              .filter(a => a.status !== 'Completed')
+              .sort((a,b) => new Date(a.deadline) - new Date(b.deadline))
+              .slice(0, 5);
+            
+            if(upcoming.length === 0) return "🎉 No upcoming deadlines! Enjoy your free time.";
+            return "⏰ Upcoming deadlines:\n" + upcoming.map(a => 
+              `• ${a.title} (${new Date(a.deadline).toLocaleDateString()})`
+            ).join('\n');
+          }
+          else if(q.includes('progress')) {
+            const total = assignments.length;
+            const completed = assignments.filter(a => a.status === 'Completed').length;
+            const perc = total ? Math.round((completed/total)*100) : 0;
+            return `📊 You've completed ${completed}/${total} assignments (${perc}%). ${perc >= 70 ? 'Great job! 🌟' : perc >= 40 ? 'Keep going! 💪' : 'You can do it! 🎯'}`;
+          }
+          else if(q.includes('timetable')) {
+            if(timetableData.subjects.length > 0) {
+              return "📅 You have a saved timetable! Go to the Timetable tab to view or edit it.";
+            } else {
+              return "📅 You haven't created a timetable yet. Try: 'create timetable for math, physics, chemistry'";
+            }
+          }
+          else {
+            return "🤔 I can help with:\n• 'motivate me' - Get inspirational quotes\n• 'deadline' - See upcoming deadlines\n• 'progress' - Check your completion rate\n• 'timetable' - Timetable status\n• 'create timetable for [subjects]' - Generate new schedule";
+          }
+        }
+
+        function sendMessage() {
+          const msg = input.value.trim();
+          if(!msg) return;
+          
+          addMessage(msg, 'user');
+          input.value = '';
+          
+          // Simulate typing
+          setTimeout(() => {
+            const reply = processQuery(msg);
+            addMessage(reply, 'bot');
+          }, 600);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+          if(e.key === 'Enter') sendMessage();
+        });
+      }
+
+      // ========== ANALYTICS ==========
+      function renderAnalytics() {
+        const total = assignments.length;
+        const completed = assignments.filter(a => a.status === 'Completed').length;
+        const pending = total - completed;
+        const perc = total ? (completed/total) * 100 : 0;
+        
+        // Calculate degrees for conic gradient
+        const degrees = perc * 3.6; // 100% = 360deg
+        
+        // Priority breakdown
+        const highPrio = assignments.filter(a => a.priority === 'High').length;
+        const mediumPrio = assignments.filter(a => a.priority === 'Medium').length;
+        const lowPrio = assignments.filter(a => a.priority === 'Low').length;
+        
+        return `
+          <h2 style="font-size: 2rem; margin-bottom: 30px;">📈 Analytics Dashboard</h2>
+          
+          <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: center; justify-content: center;">
+            <!-- Circular Progress -->
+            <div class="progress-circle" style="background: conic-gradient(#5b7cfd 0deg ${degrees}deg, #a16eff ${degrees}deg 360deg);">
+              <div class="inner-circle">
+                ${Math.round(perc)}%
+              </div>
+            </div>
+            
+            <!-- Stats -->
+            <div style="min-width: 250px;">
+              <div style="background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px;">
+                <h3 style="margin-bottom: 20px;">Summary</h3>
+                <p><i class="fas fa-tasks" style="color: #5b7cfd;"></i> Total: <strong>${total}</strong></p>
+                <p><i class="fas fa-check-circle" style="color: #6cd4a0;"></i> Completed: <strong>${completed}</strong></p>
+                <p><i class="fas fa-clock" style="color: #ffaa5e;"></i> Pending: <strong>${pending}</strong></p>
+                <p><i class="fas fa-chart-line" style="color: #a16eff;"></i> Efficiency: <strong>${Math.round(perc)}%</strong></p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Priority Breakdown -->
+          <div style="margin-top: 40px; background: rgba(255,255,255,0.05); border-radius: 30px; padding: 25px;">
+            <h3 style="margin-bottom: 20px;">Priority Distribution</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+              <div style="text-align: center;">
+                <div style="background: #ff4d6d; height: 10px; width: ${highPrio * 30}px; max-width: 100%; border-radius: 10px; margin: 0 auto;"></div>
+                <p>High: ${highPrio}</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="background: #ffaa5e; height: 10px; width: ${mediumPrio * 30}px; max-width: 100%; border-radius: 10px; margin: 0 auto;"></div>
+                <p>Medium: ${mediumPrio}</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="background: #6cd4a0; height: 10px; width: ${lowPrio * 30}px; max-width: 100%; border-radius: 10px; margin: 0 auto;"></div>
+                <p>Low: ${lowPrio}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subject Performance -->
+          ${timetableData.subjects.length > 0 ? `
+          <div style="margin-top: 30px; background: rgba(255,255,255,0.05); border-radius: 30px; padding: 25px;">
+            <h3 style="margin-bottom: 20px;">Your Subjects</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+              ${timetableData.subjects.map(s => `
+                <div style="padding: 15px; background: rgba(161,110,255,0.1); border-radius: 20px; text-align: center;">
+                  <strong>${s.name}</strong>
+                  ${s.isWeak ? '<br><span style="font-size: 0.8rem; color: #ffaa5e;">📌 Needs extra focus</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+        `;
+      }
+
+      // Initial load
+      window.renderPage = renderPage;
+    })();
+  </script>
+</body>
+</html>
